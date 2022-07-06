@@ -1,6 +1,6 @@
 # https://github.com/Appeza/tg-mirror-leech-bot edited by HuzunluArtemis
 
-from psutil import disk_usage, cpu_percent, swap_memory, cpu_count, virtual_memory, net_io_counters
+from psutil import disk_usage, cpu_percent, swap_memory, cpu_count, virtual_memory, net_io_counters, boot_time, Process as psprocess
 from bot.helper.ext_utils.bot_utils import get_readable_file_size, get_readable_time
 from time import time
 from subprocess import run
@@ -70,7 +70,14 @@ def getHerokuDetails(h_api_key, h_app_name):
         return None
 
 def stats(update, context):
+    if ospath.exists('.git'):
+        last_commit = check_output(["git log -1 --date=short --pretty=format:'%cd <b>From</b> %cr'"], shell=True).decode()
+        botVersion = check_output(["git log -1 --date=format:v%y.%m%d.%H%M --pretty=format:%cd"], shell=True).decode()
+    else:
+        last_commit = 'No UPSTREAM_REPO'
+        botVersion = 'v1'
     currentTime = get_readable_time(time() - botStartTime)
+    osUptime = get_readable_time(time() - boot_time())
     total, used, free, disk= disk_usage('/')
     total = get_readable_file_size(total)
     used = get_readable_file_size(used)
@@ -83,22 +90,31 @@ def stats(update, context):
     swap = swap_memory()
     swap_p = swap.percent
     swap_t = get_readable_file_size(swap.total)
-    swap_u = get_readable_file_size(swap.used)
-    swap_f = get_readable_file_size(swap.free)
     memory = virtual_memory()
     mem_p = memory.percent
     mem_t = get_readable_file_size(memory.total)
     mem_a = get_readable_file_size(memory.available)
     mem_u = get_readable_file_size(memory.used)
-    stats = f'<b>Disk:</b> {total} | <b>Used:</b> {used} | <b>Free:</b> {free}\n' \
-            f'<b>SWAP:</b> {swap_t} | <b>Used:</b> {swap_u}% | <b>Free:</b> {swap_f}\n\n'\
-            f'<b>Memory:</b> {mem_t} | <b>Used:</b> {mem_u} | <b>Free:</b> {mem_a}\n' \
-            f'<b>Cores:</b> {t_core} | <b>Physical:</b> {p_core} | <b>Logical:</b> {t_core - p_core} | <b>Uptime:</b> {currentTime}\n\n' \
-            f'<b>DISK:</b> {disk}% | <b>RAM:</b> {mem_p}% | <b>CPU:</b> {cpuUsage}% | <b>SWAP:</b> {swap_p}%\n' \
-            f'<b>Total Upload:</b> {sent} | <b>Total Download:</b> {recv}\n\n'
-    heroku = getHerokuDetails(HEROKU_API_KEY, HEROKU_APP_NAME)
-    if heroku: stats += heroku
-    sendMessage(stats, context.bot, update)
+    stats = f'╭───《🌐 𝗕𝗢𝗧 𝗦𝗧𝗔𝗧𝗜𝗦𝗧𝗜𝗖𝗦 🌐》\n│\n'\
+            f'├─🔢 𝗖𝗼𝗺𝗺𝗶𝘁 𝗗𝗮𝘁𝗲 ⇢ {last_commit} \n'\
+            f'├─🔢 𝗩𝗲𝗿𝘀𝗶𝗼𝗻 ⇢ {botVersion}\n'\
+            f'├─🤖 𝗕𝗼𝘁 𝗨𝗽𝘁𝗶𝗺𝗲 ⇢ {currentTime}\n│\n'\
+            f'├─✨ 𝗢𝗦 𝗨𝗽𝘁𝗶𝗺𝗲⇢ {osUptime}\n' \
+            f'├─💽 𝗧𝗼𝘁𝗮𝗹 𝗗𝗶𝘀𝗸 𝗦𝗽𝗮𝗰𝗲 ⇢ {total}\n'\
+            f'├─💻 𝗨𝘀𝗲𝗱 ⇢ {used} | 💾 𝗙𝗿𝗲𝗲 ⇢ {free}\n│\n'\
+            f'├─📤 𝗨𝗽𝗹𝗼𝗮𝗱 ⇢ {sent}\n'\
+            f'├─📥 𝗗𝗼𝘄𝗻𝗹𝗼𝗮𝗱 ⇢ {recv}\n│\n'\
+            f'├─🖥️ 𝗖𝗣𝗨 ⇢ {cpuUsage}%\n'\
+            f'├─📏 𝗥𝗔𝗠 ⇢ {mem_p}%\n'\
+            f'├─💿 𝗗𝗜𝗦𝗞 ⇢ {disk}%\n'\
+            f'├─🛰️ 𝗣𝗵𝘆𝘀𝗶𝗰𝗮𝗹 𝗖𝗼𝗿𝗲𝘀 ⇢ {p_core}\n'\
+            f'├─⚙️ 𝗧𝗼𝘁𝗮𝗹 𝗖𝗼𝗿𝗲𝘀 ⇢ {t_core}\n'\
+            f'├─⚡ 𝗦𝗪𝗔𝗣 ⇢ {swap_t} | 𝗨𝘀𝗲𝗱 ⇢ {swap_p}%\n│\n'\
+            f'├─💽 𝗠𝗲𝗺𝗼𝗿𝘆 𝗧𝗼𝘁𝗮𝗹 ⇢ {mem_t}\n'\
+            f'├─💾 𝗠𝗲𝗺𝗼𝗿𝘆 𝗙𝗿𝗲𝗲 ⇢ {mem_a}\n'\
+            f'├─💻 𝗠𝗲𝗺𝗼𝗿𝘆 𝗨𝘀𝗲𝗱 ⇢ {mem_u}\n│\n'\
+            f'╰───《☣️ <b>@PriiiiyoS_Mirror</b> ☣️》\n'
+    update.effective_message.reply_photo(IMAGE_X, stats, parse_mode=ParseMode.HTML)
 
 stats_handler = CommandHandler(BotCommands.StatsCommand, stats,
     filters=CustomFilters.authorized_chat | CustomFilters.authorized_user, run_async=True)
