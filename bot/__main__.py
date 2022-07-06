@@ -1,13 +1,13 @@
 from signal import signal, SIGINT
 from os import path as ospath, remove as osremove, execl as osexecl
 from subprocess import run as srun, check_output
-from psutil import disk_usage, cpu_percent, swap_memory, cpu_count, virtual_memory, net_io_counters, boot_time
+from psutil import disk_usage, cpu_percent, swap_memory, cpu_count, virtual_memory, net_io_counters, boot_time, Process as psprocess
 from time import time
 from sys import executable
 from telegram import InlineKeyboardMarkup
 from telegram.ext import CommandHandler
 
-from bot import bot, dispatcher, updater, botStartTime, IGNORE_PENDING_REQUESTS, LOGGER, Interval, INCOMPLETE_TASK_NOTIFIER, DB_URI, app, main_loop
+from bot import bot, dispatcher, updater, botStartTime, IGNORE_PENDING_REQUESTS, HEROKU_API_KEY, HEROKU_APP_NAME, LOGGER, Interval, INCOMPLETE_TASK_NOTIFIER, DB_URI, app, main_loop
 from .helper.ext_utils.fs_utils import start_cleanup, clean_all, exit_clean_up
 from .helper.ext_utils.telegraph_helper import telegraph
 from .helper.ext_utils.bot_utils import get_readable_file_size, get_readable_time
@@ -17,85 +17,78 @@ from .helper.telegram_helper.message_utils import sendMessage, sendMarkup, editM
 from .helper.telegram_helper.filters import CustomFilters
 from .helper.telegram_helper.button_build import ButtonMaker
 
-from .modules import authorize, list, cancel_mirror, mirror_status, mirror, clone, watch, shell, eval, delete, count, leech_settings, search, rss
-
-
-def stats(update, context):
-    if ospath.exists('.git'):
-        last_commit = check_output(["git log -1 --date=short --pretty=format:'%cd <b>From</b> %cr'"], shell=True).decode()
-    else:
-        last_commit = 'No UPSTREAM_REPO'
-    currentTime = get_readable_time(time() - botStartTime)
-    osUptime = get_readable_time(time() - boot_time())
-    total, used, free, disk= disk_usage('/')
-    total = get_readable_file_size(total)
-    used = get_readable_file_size(used)
-    free = get_readable_file_size(free)
-    sent = get_readable_file_size(net_io_counters().bytes_sent)
-    recv = get_readable_file_size(net_io_counters().bytes_recv)
-    cpuUsage = cpu_percent(interval=0.5)
-    p_core = cpu_count(logical=False)
-    t_core = cpu_count(logical=True)
-    swap = swap_memory()
-    swap_p = swap.percent
-    swap_t = get_readable_file_size(swap.total)
-    memory = virtual_memory()
-    mem_p = memory.percent
-    mem_t = get_readable_file_size(memory.total)
-    mem_a = get_readable_file_size(memory.available)
-    mem_u = get_readable_file_size(memory.used)
-    stats = f'<b>Commit Date:</b> {last_commit}\n\n'\
-            f'<b>Bot Uptime:</b> {currentTime}\n'\
-            f'<b>OS Uptime:</b> {osUptime}\n\n'\
-            f'<b>Total Disk Space:</b> {total}\n'\
-            f'<b>Used:</b> {used} | <b>Free:</b> {free}\n\n'\
-            f'<b>Upload:</b> {sent}\n'\
-            f'<b>Download:</b> {recv}\n\n'\
-            f'<b>CPU:</b> {cpuUsage}%\n'\
-            f'<b>RAM:</b> {mem_p}%\n'\
-            f'<b>DISK:</b> {disk}%\n\n'\
-            f'<b>Physical Cores:</b> {p_core}\n'\
-            f'<b>Total Cores:</b> {t_core}\n\n'\
-            f'<b>SWAP:</b> {swap_t} | <b>Used:</b> {swap_p}%\n'\
-            f'<b>Memory Total:</b> {mem_t}\n'\
-            f'<b>Memory Free:</b> {mem_a}\n'\
-            f'<b>Memory Used:</b> {mem_u}\n'
-    sendMessage(stats, context.bot, update.message)
+from .modules import antispam, authorize, list, cancel_mirror, mirror_status, mirror, clone, watch, shell, eval, delete, \
+    speedtest, count, leech_settings, search, rss, wayback, virustotal, hash, shortener, mediainfo, stats
 
 
 def start(update, context):
+    chat_u = CHANNEL_USERNAME.replace('@','')
     buttons = ButtonMaker()
-    buttons.buildbutton("Repo", "https://www.github.com/anasty17/mirror-leech-telegram-bot")
-    buttons.buildbutton("Report Group", "https://t.me/+PRRzqHd31XY3ZWZk")
+    buttons.buildbutton("DEVELOPER", "https://t.me/Priiiiyo")
+    buttons.buildbutton("👉🏻 𝗠𝗜𝗥𝗥𝗢𝗥 𝗚𝗥𝗢𝗨𝗣 👈🏻", f"https://t.me/{chat_u}")
     reply_markup = InlineKeyboardMarkup(buttons.build_menu(2))
     if CustomFilters.authorized_user(update) or CustomFilters.authorized_chat(update):
-        start_string = f'''
-This bot can mirror all your links to Google Drive!
-Type /{BotCommands.HelpCommand} to get a list of available commands
-'''
-        sendMarkup(start_string, context.bot, update.message, reply_markup)
+        start_string = ' 𝗧𝗵𝗶𝘀 𝗯𝗼𝘁 𝗰𝗮𝗻 𝗺𝗶𝗿𝗿𝗼𝗿 𝗮𝗹𝗹 𝘆𝗼𝘂𝗿 𝗹𝗶𝗻𝗸𝘀 𝘁𝗼 𝗚𝗼𝗼𝗴𝗹𝗲 𝗗𝗿𝗶𝘃𝗲!'
+        start_string += f'\n\n 𝗧𝘆𝗽𝗲 /{BotCommands.HelpCommand} 𝘁𝗼 𝗴𝗲𝘁 𝗮 𝗹𝗶𝘀𝘁 𝗼𝗳 𝗮𝘃𝗮𝗶𝗹𝗮𝗯𝗹𝗲 𝗰𝗼𝗺𝗺𝗮𝗻𝗱𝘀.'
+        reply_message = sendMarkup(start_string, context.bot, update.message, reply_markup)
     else:
-        sendMarkup('Not Authorized user, deploy your own mirror-leech bot', context.bot, update.message, reply_markup)
+        if BOT_PM:
+            reply_message = sendMarkup(f'𝗗𝗲𝗮𝗿 {update.message.chat.first_name} ({update.message.chat.username}), \n\n\n 𝗜𝗳 𝗬𝗼𝘂 𝗪𝗮𝗻𝘁 𝗧𝗼 𝗨𝘀𝗲 𝗠𝗲, 𝗬𝗼𝘂 𝗛𝗮𝘃𝗲 𝗧𝗼 𝗝𝗼𝗶𝗻 𝗠𝘆 𝗠𝗶𝗿𝗿𝗼𝗿 𝗚𝗿𝗼𝘂𝗽 𝗕𝘆 𝗖𝗹𝗶𝗰𝗸𝗶𝗻𝗴 𝗧𝗵𝗲 𝗕𝗲𝗹𝗼𝘄 𝗕𝘂𝘁𝘁𝗼𝗻.', context.bot, update.message, reply_markup)
+            Thread(target=auto_delete_message, args=(context.bot, update.message, reply_message)).start()
+            return
+        else:
+            reply_message = sendMarkup(f'Dear {uname},You have started me\n\n', context.bot, update, reply_markup)
+            Thread(target=auto_delete_message, args=(context.bot, update.message, message)).start()
+            return
 
 def restart(update, context):
-    restart_message = sendMessage("Restarting...", context.bot, update.message)
-    if Interval:
-        Interval[0].cancel()
-        Interval.clear()
-    clean_all()
-    srun(["pkill", "-f", "gunicorn|aria2c|qbittorrent-nox"])
-    srun(["python3", "update.py"])
-    with open(".restartmsg", "w") as f:
-        f.truncate(0)
-        f.write(f"{restart_message.chat.id}\n{restart_message.message_id}\n")
-    osexecl(executable, executable, "-m", "bot")
+    cmd = update.effective_message.text.split(' ', 1)
+    dynoRestart = False
+    dynoKill = False
+    if len(cmd) == 2:
+        dynoRestart = (cmd[1].lower()).startswith('d')
+        dynoKill = (cmd[1].lower()).startswith('k')
+    if (not HEROKU_API_KEY) or (not HEROKU_APP_NAME):
+        LOGGER.info("If you want Heroku features, fill HEROKU_APP_NAME HEROKU_API_KEY vars.")
+        dynoRestart = False
+        dynoKill = False
+    if dynoRestart:
+        LOGGER.info("Dyno Restarting.")
+        restart_message = sendMessage("Dyno Restarting.", context.bot, update)
+        with open(".restartmsg", "w") as f:
+            f.truncate(0)
+            f.write(f"{restart_message.chat.id}\n{restart_message.message_id}\n")
+        heroku_conn = heroku3.from_key(HEROKU_API_KEY)
+        app = heroku_conn.app(HEROKU_APP_NAME)
+        app.restart()
+    elif dynoKill:
+        LOGGER.info("Killing Dyno. MUHAHAHA")
+        sendMessage("Killed Dyno.", context.bot, update)
+        heroku_conn = heroku3.from_key(HEROKU_API_KEY)
+        app = heroku_conn.app(HEROKU_APP_NAME)
+        proclist = app.process_formation()
+        for po in proclist:
+            app.process_formation()[po.type].scale(0)
+    else:
+        LOGGER.info("Normally Restarting.")
+        restart_message = sendMessage("Restarting...", context.bot, update.message)
+        if Interval:
+            Interval[0].cancel()
+            Interval.clear()
+        clean_all()
+        srun(["pkill", "-f", "gunicorn|aria2c|qbittorrent-nox"])
+        srun(["python3", "update.py"])
+        with open(".restartmsg", "w") as f:
+            f.truncate(0)
+            f.write(f"{restart_message.chat.id}\n{restart_message.message_id}\n")
+        osexecl(executable, executable, "-m", "bot")
 
 
 def ping(update, context):
     start_time = int(round(time() * 1000))
-    reply = sendMessage("Starting Ping", context.bot, update.message)
+    reply = sendMessage("⛔ 𝗦𝘁𝗮𝗿𝘁𝗶𝗻𝗴 𝗣𝗶𝗻𝗴", context.bot, update.message)
     end_time = int(round(time() * 1000))
-    editMessage(f'{end_time - start_time} ms', reply)
+    editMessage(f'{end_time - start_time} 𝗺𝘀', reply)
 
 
 def log(update, context):
@@ -171,7 +164,7 @@ help_string_telegraph = f'''<br>
 '''
 
 help = telegraph.create_page(
-        title='Mirror-Leech-Bot Help',
+        title='TG-Mirror-Leech-Bot Help',
         content=help_string_telegraph,
     )["path"]
 
@@ -199,7 +192,7 @@ help_string = f'''
 
 def bot_help(update, context):
     button = ButtonMaker()
-    button.buildbutton("Other Commands", f"https://telegra.ph/{help}")
+    button.buildbutton("🤖 𝗢𝗧𝗛𝗘𝗥 𝗖𝗢𝗠𝗠𝗔𝗡𝗗𝗦 🤖", f"https://telegra.ph/{help}")
     reply_markup = InlineKeyboardMarkup(button.build_menu(1))
     sendMarkup(help_string, context.bot, update.message, reply_markup)
 
@@ -238,8 +231,22 @@ botcmds = [
     ]
 
 def main():
-    # bot.set_my_commands(botcmds)
+    bot.set_my_commands(botcmds)
     start_cleanup()
+    # Check if the bot is restarting
+    GROUP_ID = f'{RESTARTED_GROUP_ID}'
+    kie = datetime.now(pytz.timezone(f'{TIMEZONE}'))
+    jam = kie.strftime('\n📅 𝗗𝗮𝘁𝗲 : %d/%m/%Y\n⏲️ 𝗧𝗶𝗺𝗲: %I:%M:%S %P')
+    if GROUP_ID is not None and isinstance(GROUP_ID, str):
+        try:
+            dispatcher.bot.sendMessage(
+                f"{GROUP_ID}", f"♻️ 𝐁𝐎𝐓 𝐆𝐎𝐓 𝐑𝐄𝐒𝐓𝐀𝐑𝐓𝐄𝐃 ♻️\n{jam}\n\n🗺️ 𝙏𝙄𝙈𝙀 𝙕𝙊𝙉𝙀\n{TIMEZONE}\n\n𝙿𝙻𝙴𝙰𝚂𝙴 𝚁𝙴-𝙳𝙾𝚆𝙽𝙻𝙾𝙰𝙳 𝙰𝙶𝙰𝙸𝙽\n\n#Restarted")
+        except Unauthorized:
+            LOGGER.warning(
+                "Bot isnt able to send message to support_chat, go and check!"
+            )
+        except BadRequest as e:
+            LOGGER.warning(e.message)
     if INCOMPLETE_TASK_NOTIFIER and DB_URI is not None:
         notifier_dict = DbManger().get_incomplete_tasks()
         if notifier_dict:
@@ -247,25 +254,22 @@ def main():
                 if ospath.isfile(".restartmsg"):
                     with open(".restartmsg") as f:
                         chat_id, msg_id = map(int, f)
-                    msg = 'Restarted successfully!'
+                    msg = f"𝐁𝐎𝐓 𝐆𝐎𝐓 𝐑𝐄𝐒𝐓𝐀𝐑𝐓𝐄𝐃\n {jam}\n\n 𝗧𝗶𝗺𝗲 𝗭𝗼𝗻𝗲 : {TIMEZONE}\n\n𝐑𝐞-𝐌𝐢𝐫𝐫𝐨𝐫 𝐘𝐨𝐮'𝐫 𝐓𝐡𝐢𝐧𝐠'𝐬!"
                 else:
-                    msg = 'Bot Restarted!'
+                    msg = f"♻️ 𝐁𝐎𝐓 𝐆𝐎𝐓 𝐑𝐄𝐒𝐓𝐀𝐑𝐓𝐄𝐃 ♻️\n {jam}\n\n 𝗧𝗶𝗺𝗲 𝗭𝗼𝗻𝗲 : {TIMEZONE}\n\n𝐑𝐞-𝐌𝐢𝐫𝐫𝐨𝐫 𝐘𝐨𝐮'𝐫 𝐓𝐡𝐢𝐧𝐠'𝐬!"
                 for tag, links in data.items():
                      msg += f"\n\n{tag}: "
                      for index, link in enumerate(links, start=1):
                          msg += f" <a href='{link}'>{index}</a> |"
                          if len(msg.encode()) > 4000:
-                             if 'Restarted successfully!' in msg and cid == chat_id:
-                                 bot.editMessageText(msg, chat_id, msg_id, parse_mode='HTMl', disable_web_page_preview=True)
+                             if '♻️ 𝐁𝐎𝐓 𝐆𝐎𝐓 𝐑𝐄𝐒𝐓𝐀𝐑𝐓𝐄𝐃 ♻️' in msg and cid == chat_id:
+                                 bot.editMessageText(msg, chat_id, msg_id, parse_mode='HTMl')
                                  osremove(".restartmsg")
                              else:
-                                 try:
-                                     bot.sendMessage(cid, msg, 'HTML')
-                                 except Exception as e:
-                                     LOGGER.error(e)
+                                 bot.sendMessage(cid, msg, 'HTML')
                              msg = ''
-                if 'Restarted successfully!' in msg and cid == chat_id:
-                     bot.editMessageText(msg, chat_id, msg_id, parse_mode='HTMl', disable_web_page_preview=True)
+                if '♻️ 𝐁𝐎𝐓 𝐆𝐎𝐓 𝐑𝐄𝐒𝐓𝐀𝐑𝐓𝐄𝐃 ♻️' in msg and cid == chat_id:
+                     bot.editMessageText(msg, chat_id, msg_id, parse_mode='HTMl')
                      osremove(".restartmsg")
                 else:
                     try:
@@ -276,7 +280,7 @@ def main():
     if ospath.isfile(".restartmsg"):
         with open(".restartmsg") as f:
             chat_id, msg_id = map(int, f)
-        bot.edit_message_text("Restarted successfully!", chat_id, msg_id)
+        bot.edit_message_text(f"𝐁𝐎𝐓 𝐆𝐎𝐓 𝐑𝐄𝐒𝐓𝐀𝐑𝐓𝐄𝐃\n {jam}\n\n 𝗧𝗶𝗺𝗲 𝗭𝗼𝗻𝗲 : {TIMEZONE}\n\n𝐑𝐞-𝐌𝐢𝐫𝐫𝐨𝐫 𝐘𝐨𝐮'𝐫 𝐓𝐡𝐢𝐧𝐠'𝐬", chat_id, msg_id)
         osremove(".restartmsg")
 
     start_handler = CommandHandler(BotCommands.StartCommand, start, run_async=True)
@@ -296,7 +300,9 @@ def main():
     dispatcher.add_handler(stats_handler)
     dispatcher.add_handler(log_handler)
     updater.start_polling(drop_pending_updates=IGNORE_PENDING_REQUESTS)
-    LOGGER.info("Bot Started!")
+    LOGGER.info(
+        "⚠️ If Any optional vars not be filled it will use Defaults vars")
+    LOGGER.info("📶 𝐁𝐎𝐓 𝐒𝐓𝐀𝐑𝐓𝐄𝐃 ♻️")
     signal(SIGINT, exit_clean_up)
 
 app.start()
