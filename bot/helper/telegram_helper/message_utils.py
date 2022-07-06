@@ -1,6 +1,7 @@
 from time import sleep, time
 from telegram import InlineKeyboardMarkup
 from telegram.message import Message
+from pyrogram import enums
 from telegram.update import FloodWait
 
 from telegram.error import RetryAfter
@@ -104,6 +105,19 @@ def auto_delete_message(bot, cmd_message: Message, bot_message: Message):
         sleep(AUTO_DELETE_MESSAGE_DURATION)
         try:
             # Skip if None is passed meaning we don't want to delete bot xor cmd message
+            deleteMessage(bot, cmd_message)
+            deleteMessage(bot, bot_message)
+        except AttributeError:
+            pass
+
+def auto_delete_upload_message(bot, cmd_message: Message, bot_message: Message):
+    if cmd_message.chat.type == "private":
+        pass
+    elif AUTO_DELETE_UPLOAD_MESSAGE_DURATION != -1:
+        sleep(AUTO_DELETE_UPLOAD_MESSAGE_DURATION)
+        try:
+            # Skip if None is passed meaning we don't want to delete bot xor
+            # cmd message
             deleteMessage(bot, cmd_message)
             deleteMessage(bot, bot_message)
         except AttributeError:
