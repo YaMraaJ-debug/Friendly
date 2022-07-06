@@ -2,16 +2,21 @@
 
 from psutil import disk_usage, cpu_percent, swap_memory, cpu_count, virtual_memory, net_io_counters, boot_time, Process as psprocess
 from bot.helper.ext_utils.bot_utils import get_readable_file_size, get_readable_time
+from datetime import datetime
 from time import time
-from subprocess import run
+from subprocess import run as srun, check_output
 import requests
 from bot import LOGGER, dispatcher, botStartTime, HEROKU_API_KEY, HEROKU_APP_NAME
 from telegram.ext import CommandHandler
-from bot.helper.telegram_helper.message_utils import sendMessage
+from telegram import ParseMode, InlineKeyboardMarkup
+from bot.helper.telegram_helper.message_utils import auto_delete_message, sendMessage, sendMarkup, editMessage
 from bot.helper.telegram_helper.filters import CustomFilters
 from bot.helper.telegram_helper.bot_commands import BotCommands
 from bot.modules.wayback import getRandomUserAgent
 
+now = datetime.now(pytz.timezone(f'{TIMEZONE}'))
+
+IMAGE_X = "https://telegra.ph/file/28d6c50c499936aed0651.png"
 
 def getHerokuDetails(h_api_key, h_app_name):
     try: import heroku3
