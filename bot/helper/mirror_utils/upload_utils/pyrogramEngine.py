@@ -5,8 +5,9 @@ from pyrogram.errors import FloodWait, RPCError
 from PIL import Image
 from threading import RLock
 
-from bot import DOWNLOAD_DIR, AS_DOCUMENT, AS_DOC_USERS, AS_MEDIA_USERS, CUSTOM_FILENAME, EXTENSION_FILTER, app
+from bot import DOWNLOAD_DIR, AS_DOCUMENT, AS_DOC_USERS, AS_MEDIA_USERS, CUSTOM_FILENAME, BOT_PM, IMAGE_LEECH, LEECH_LOG, LEECH_LOG_ALT, EXTENSION_FILTER, app
 from bot.helper.ext_utils.fs_utils import take_ss, get_media_info, get_path_size
+
 from bot.helper.ext_utils.bot_utils import get_readable_file_size
 
 LOGGER = getLogger(__name__)
@@ -15,7 +16,7 @@ getLogger("pyrogram").setLevel(WARNING)
 VIDEO_SUFFIXES = ("MKV", "MP4", "MOV", "WMV", "3GP", "MPG", "WEBM", "AVI", "FLV", "M4V", "GIF")
 AUDIO_SUFFIXES = ("MP3", "M4A", "M4B", "FLAC", "WAV", "AIF", "OGG", "AAC", "DTS", "MID", "AMR", "MKA")
 IMAGE_SUFFIXES = ("JPG", "JPX", "PNG", "CR2", "TIF", "BMP", "JXR", "PSD", "ICO", "HEIC", "JPEG")
-
+TEXT_SUFFIXES = ("TXT", "NFO", "HTML")
 
 class TgUploader:
 
@@ -28,6 +29,7 @@ class TgUploader:
         self.__total_files = 0
         self.__is_cancelled = False
         self.__as_doc = AS_DOCUMENT
+        self.__image_leech = IMAGE_
         self.__thumb = f"Thumbnails/{listener.message.from_user.id}.jpg"
         self.__msgs_dict = {}
         self.__corrupted = 0
@@ -35,6 +37,13 @@ class TgUploader:
         self.__is_corrupted = False
         self.__sent_msg = app.get_messages(self.__listener.message.chat.id, self.__listener.uid)
         self.__user_settings()
+        self.__chat_id = listener.message.chat.id
+        self.__message_id = listener.uid
+        self.__user_id = listener.message.from_user.id
+        # copy then pop to keep the original var as it is
+        self.__leech_log = LEECH_LOG.copy()
+        # copy then pop to keep the original var as it is
+        self.__leech_log_alt = LEECH_LOG_ALT.copy()
 
     def upload(self):
         path = f"{DOWNLOAD_DIR}{self.__listener.uid}"
@@ -61,6 +70,10 @@ class TgUploader:
         self.__listener.onUploadComplete(None, size, self.__msgs_dict, self.__total_files, self.__corrupted, self.name)
 
     def __upload_file(self, up_path, file_, dirpath):
+        if self.__sent_msg == "":
+            self.__sent_msg = app.get_messages(self.__listener.message.chat.id, self.__listener.uid)
+        else:
+            self.__sent_msg = app.get_messages(self.__sent_msg.chat.id, self.__listener.uid)
         if CUSTOM_FILENAME is not None:
             cap_mono = f"{CUSTOM_FILENAME} <code>{file_}</code>"
             file_ = f"{CUSTOM_FILENAME} {file_}"
@@ -95,6 +108,7 @@ class TgUploader:
                         osrename(up_path, new_path)
                         up_path = new_path
                     self.__sent_msg = self.__sent_msg.reply_video(video=up_path,
+                                                                  chat_id=i,
                                                                   quote=True,
                                                                   caption=cap_mono,
                                                                   duration=duration,
@@ -104,9 +118,21 @@ class TgUploader:
                                                                   supports_streaming=True,
                                                                   disable_notification=True,
                                                                   progress=self.__upload_progress)
+                    if BOT_PM:
+                            try:
+                                msg.reply_video(chat_id=self.__user_id, video=self.__sent_msg.video.file_id, quote=True, caption=cap_mono)
+                            except Exception as err:
+                                LOGGER.error(f"Failed To Send Video in PM:\n{err}")
+                        if LEECH_LOG_ALT:
+                            try:
+                                for i in self.__leech_log_alt:
+                                    msg.reply_video(chat_id=i, video=self.__sent_msg.video.file_id, quote=True, caption=cap_mono)
+                            except Exception as err:
+                                LOGGER.error(f"Failed to send Video in Alt Leech Log:\n{err}")
                 elif file_.upper().endswith(AUDIO_SUFFIXES):
                     duration , artist, title = get_media_info(up_path)
                     self.__sent_msg = self.__sent_msg.reply_audio(audio=up_path,
+                                                                  chat_id=i,
                                                                   quote=True,
                                                                   caption=cap_mono,
                                                                   duration=duration,
@@ -115,12 +141,38 @@ class TgUploader:
                                                                   thumb=thumb,
                                                                   disable_notification=True,
                                                                   progress=self.__upload_progress)
+                    if BOT_PM:
+                            try:
+                                msg.reply_audio(chat_id=self.__user_id, audio=self.__sent_msg.audio.file_id, quote=True, caption=cap_mono)
+                            except Exception as err:
+                                LOGGER.error(f"Failed To Send Audio in PM:\n{err}")
+                        if LEECH_LOG_ALT:
+                            try:
+                                for i in self.__leech_log_alt:
+                                    msg.reply_audio(chat_id=i, audio=self.__sent_msg.audio.file_id, quote=True, caption=cap_mono)
+                            except Exception as err:
+                                LOGGER.error(f"Failed to send Audio in Alt Leech Log:\n{err}")
                 elif file_.upper().endswith(IMAGE_SUFFIXES):
                     self.__sent_msg = self.__sent_msg.reply_photo(photo=up_path,
+                                                                  chat_id=i,
                                                                   quote=True,
                                                                   caption=cap_mono,
                                                                   disable_notification=True,
                                                                   progress=self.__upload_progress)
+                    if BOT_PM:
+                                try:
+                                    msg.reply_photo(chat_id=self.__user_id, photo=self.__sent_msg.photo.file_id, quote=True, caption=cap_mono)
+                                except Exception as err:
+                                    LOGGER.error(f"Failed To Send Image in PM:\n{err}")
+                            if LEECH_LOG_ALT:
+                                try:
+                                    msg.reply_photo(chat_id=i, photo=self.__sent_msg.photo.file_id, quote=True, caption=cap_mono)
+                                except Exception as err:
+                                    LOGGER.error(f"Failed To Send Image in Alt Leech Log:\n{err}")
+                        except Exception as err:
+                            LOGGER.warning(f"Image Leech is Blocked by Owner:\n{err}")
+                    else:
+                        LOGGER.warning(f"Image Leech is Blocked by Owner")
                 else:
                     notMedia = True
             if self.__as_doc or notMedia:
@@ -136,6 +188,17 @@ class TgUploader:
                                                                  caption=cap_mono,
                                                                  disable_notification=True,
                                                                  progress=self.__upload_progress)
+                if BOT_PM:
+                        try:
+                            app.send_document(chat_id=self.__user_id, document=self.__sent_msg.document.file_id, quote=True, caption=cap_mono)
+                        except Exception as err:
+                            LOGGER.error(f"Failed To Send Document in PM:\n{err}")
+                    if LEECH_LOG_ALT:
+                        try:
+                            for i in self.__leech_log_alt:
+                                msg.reply_document(chat_id=i, document=self.__sent_msg.document.file_id, quote=True, caption=cap_mono)
+                        except Exception as err:
+                            LOGGER.error(f"Failed To Send Document in Alt Leech Log:\n{err}")
         except FloodWait as f:
             LOGGER.warning(str(f))
             sleep(f.value)
