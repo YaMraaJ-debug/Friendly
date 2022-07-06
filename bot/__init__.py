@@ -105,9 +105,14 @@ rss_dict = {}
 
 AUTHORIZED_CHATS = set()
 SUDO_USERS = set()
+MOD_USERS = set()
 AS_DOC_USERS = set()
 AS_MEDIA_USERS = set()
-EXTENSION_FILTER = set()
+MIRROR_LOGS = set()
+LINK_LOGS = set()
+LEECH_LOG = set()
+LEECH_LOG_ALT = set()
+EXTENTION_FILTER = set()
 
 try:
     aid = getConfig('AUTHORIZED_CHATS')
@@ -121,6 +126,41 @@ try:
     aid = aid.split()
     for _id in aid:
         SUDO_USERS.add(int(_id.strip()))
+except:
+    pass
+try:
+    aid = getConfig(MOD_USERS')
+    aid = aid.split()
+    for _id in aid:
+        MOD_USERS.add(int(_id.strip()))
+except:
+    pass
+try:
+    aid = getConfig('MIRROR_LOGS')
+    aid = aid.split()
+    for _id in aid:
+        MIRROR_LOGS.add(int(_id.strip()))
+except:
+    pass
+try:
+    aid = getConfig('LINK_LOGS')
+    aid = aid.split()
+    for _id in aid:
+        LINK_LOGS.add(int(_id.strip()))
+except:
+    pass
+try:
+    aid = getConfig(LEECH_LOG')
+    aid = aid.split()
+    for _id in aid:
+        LEECH_LOG.add(int(_id.strip()))
+except:
+    pass
+try:
+    aid = getConfig('LEECH_LOG_ALT')
+    aid = aid.split()
+    for _id in aid:
+        LEECH_LOG_ALT.add(int(_id.strip()))
 except:
     pass
 try:
@@ -317,6 +357,11 @@ try:
 except:
     AS_DOCUMENT = False
 try:
+    IMAGE_LEECH = getConfig("IMAGE_LEECH")
+    IMAGE_LEECH = IMAGE_LEECH.lower() == "true"
+except KeyError:
+    IMAGE_LEECH = False
+try:
     EQUAL_SPLITS = getConfig('EQUAL_SPLITS')
     EQUAL_SPLITS = EQUAL_SPLITS.lower() == 'true'
 except:
@@ -338,6 +383,139 @@ try:
         raise KeyError
 except:
     CRYPT = None
+try:
+    APPDRIVE_EMAIL = getConfig("APPDRIVE_EMAIL")
+    APPDRIVE_PASS = getConfig("APPDRIVE_PASS")
+    if len(APPDRIVE_EMAIL) == 0 or len(APPDRIVE_PASS) == 0:
+        raise KeyError
+except KeyError:
+    APPDRIVE_EMAIL = None
+    APPDRIVE_PASS = None
+try:
+    GD_INFO = getConfig("GD_INFO")
+    if len(GD_INFO) == 0:
+        raise KeyError
+except KeyError:
+    GD_INFO = ""
+try:
+    DRIVE_BUTTON = getConfig("DRIVE_BUTTON")
+    if len(DRIVE_BUTTON) == 0:
+        raise KeyError
+except KeyError:
+    DRIVE_BUTTON = ""
+try:
+    INDEX_BUTTON = getConfig("INDEX_BUTTON")
+    if len(INDEX_BUTTON) == 0:
+        raise KeyError
+except KeyError:
+    INDEX_BUTTON = ""
+try:
+    VIEW_BUTTON = getConfig("VIEW_BUTTON")
+    if len(VIEW_BUTTON) == 0:
+        raise KeyError
+except KeyError:
+    VIEW_BUTTON = ""
+try:
+    TELEGRAPH_DRIVE = getConfig("TELEGRAPH_DRIVE")
+    if len(TELEGRAPH_DRIVE) == 0:
+        raise KeyError
+except KeyError:
+    TELEGRAPH_DRIVE = ""
+try:
+    TELEGRAPH_INDEX = getConfig("TELEGRAPH_INDEX")
+    if len(TELEGRAPH_INDEX) == 0:
+        raise KeyError
+except KeyError:
+    TELEGRAPH_INDEX = ""
+try:
+    TELEGRAPH_VIEW = getConfig("TELEGRAPH_VIEW")
+    if len(TELEGRAPH_VIEW) == 0:
+        raise KeyError
+except KeyError:
+    TELEGRAPH_VIEW = ""
+try:
+    SEARCH_VIEW_BUTTON = getConfig("SEARCH_VIEW_BUTTON")
+    if len(SEARCH_VIEW_BUTTON) == 0:
+        raise KeyError
+except KeyError:
+    SEARCH_VIEW_BUTTON = ""
+try:
+    TITLE_NAME = getConfig("TITLE_NAME")
+    if len(TITLE_NAME) == 0:
+        raise KeyError
+except KeyError:
+    TITLE_NAME = "Priiiiyo'S Mirror Search"
+try:
+    AUTHOR_NAME = getConfig("AUTHOR_NAME")
+    if len(AUTHOR_NAME) == 0:
+        raise KeyError
+except KeyError:
+    AUTHOR_NAME = "Priiiiyo'S Mirror Bot"
+try:
+    AUTHOR_URL = getConfig("AUTHOR_URL")
+    if len(AUTHOR_URL) == 0:
+        raise KeyError
+except KeyError:
+    AUTHOR_URL = "https://t.me/priiiiyo"
+try:
+    RESTARTED_GROUP_ID = int(getConfig("RESTARTED_GROUP_ID"))
+except BaseException:
+    RESTARTED_GROUP_ID = None
+try:
+    TIMEZONE = getConfig("TIMEZONE")
+    if len(TIMEZONE) == 0:
+        raise KeyError
+except KeyError:
+    TIMEZONE = "Asia/Kolkata"
+try:
+    HEROKU_APP_NAME = getConfig("HEROKU_APP_NAME")
+    if len(HEROKU_APP_NAME) == 0:
+        raise KeyError
+except KeyError:
+    log_warning("HEROKU_APP_NAME not provided!")
+    HEROKU_APP_NAME = None
+try:
+    HEROKU_API_KEY = getConfig("HEROKU_API_KEY")
+    if len(HEROKU_API_KEY) == 0:
+        raise KeyError
+except KeyError:
+    log_warning("HEROKU_API_KEY not provided!")
+    HEROKU_API_KEY = None
+try:
+    LEECH_ENABLED = getConfig("LEECH_ENABLED")
+    LEECH_ENABLED = LEECH_ENABLED.lower() == "true"
+except BaseException:
+    LEECH_ENABLED = False
+try:
+    BOT_PM = getConfig("BOT_PM")
+    if BOT_PM.lower() == "true":
+        BOT_PM = "true"
+except BaseException:
+    log_warning("BOT_PM is disabled")
+    BOT_PM = False
+try:
+    FSUB = getConfig("FSUB")
+    FSUB = FSUB.lower() == "true"
+except KeyError:
+    FSUB = False
+try:
+    FSUB_CHANNEL_ID = int(getConfig("FSUB_CHANNEL_ID"))
+except KeyError:
+    FSUB_CHANNEL_ID = ""
+try:
+    CHANNEL_USERNAME: str = getConfig("CHANNEL_USERNAME").replace("@", "")
+    if len(CHANNEL_USERNAME) == 0:
+        CHANNEL_USERNAME = "PriiiiyoS_Mirror"
+except KeyError:
+    logging.warning("CHANNEL_USERNAME not provided")
+    CHANNEL_USERNAME = "PriiiiyoS_Mirror"
+try:
+    AUTO_DELETE_UPLOAD_MESSAGE_DURATION = int(getConfig("AUTO_DELETE_UPLOAD_MESSAGE_DURATION"))
+    if AUTO_DELETE_UPLOAD_MESSAGE_DURATION < 0:
+        raise KeyError
+except KeyError:
+    log_warning("AUTO_DELETE_UPLOAD_MESSAGE_DURATION not provided or is less than 0. Using default value of 10 min (600s)")
+    AUTO_DELETE_UPLOAD_MESSAGE_DURATION = 600
 try:
     TOKEN_PICKLE_URL = getConfig('TOKEN_PICKLE_URL')
     if len(TOKEN_PICKLE_URL) == 0:
@@ -426,6 +604,62 @@ try:
     SEARCH_PLUGINS = jsnloads(SEARCH_PLUGINS)
 except:
     SEARCH_PLUGINS = None
+try:
+    FINISHED_PROGRESS_STR = getConfig('FINISHED_PROGRESS_STR') 
+    UN_FINISHED_PROGRESS_STR = getConfig('UN_FINISHED_PROGRESS_STR')
+except:
+    FINISHED_PROGRESS_STR = '●' # '■'
+    UN_FINISHED_PROGRESS_STR = '○' # '□'
+try:
+    UPDATE_EVERYTHING_WHEN_RESTART = getConfig('UPDATE_EVERYTHING_WHEN_RESTART').lower() == 'true'
+except KeyError:
+    UPDATE_EVERYTHING_WHEN_RESTART = True
+try:
+    VIRUSTOTAL_API = getConfig('VIRUSTOTAL_API')
+    if len(VIRUSTOTAL_API) < 4: raise KeyError
+except KeyError:
+    logging.warning('VIRUSTOTAL_API not provided.')
+    VIRUSTOTAL_API = None
+try:
+    VIRUSTOTAL_FREE = getConfig('VIRUSTOTAL_FREE').lower() == 'true'
+except KeyError:
+    VIRUSTOTAL_FREE = True
+try:
+    HEROKU_API_KEY = getConfig('HEROKU_API_KEY')
+    HEROKU_APP_NAME = getConfig('HEROKU_APP_NAME')
+    if len(HEROKU_API_KEY) == 0 or len(HEROKU_APP_NAME) == 0:
+        raise KeyError
+except KeyError:
+    LOGGER.warning("Heroku details not entered.")
+    HEROKU_API_KEY = None
+    HEROKU_APP_NAME = None
+try:
+    SPAMWATCH_ANTISPAM_API = getConfig('SPAMWATCH_ANTISPAM_API')
+    if len(SPAMWATCH_ANTISPAM_API) == 0: raise KeyError
+    else: logging.info('Using SPAMWATCH_ANTISPAM_API')
+except KeyError:
+    logging.info('Not using SPAMWATCH_ANTISPAM_API')
+    SPAMWATCH_ANTISPAM_API = None
+try:
+    USERGE_ANTISPAM_API = getConfig('USERGE_ANTISPAM_API')
+    if len(USERGE_ANTISPAM_API) == 0: raise KeyError
+    else: logging.info('Using USERGE_ANTISPAM_API')
+except KeyError:
+    logging.info('Not using USERGE_ANTISPAM_API')
+    USERGE_ANTISPAM_API = None
+try:
+    COMBOT_CAS_ANTISPAM = getConfig('COMBOT_CAS_ANTISPAM').lower() == 'true'
+    logging.info('Using COMBOT_CAS_ANTISPAM')
+except KeyError:
+    logging.info('No using COMBOT_CAS_ANTISPAM')
+    COMBOT_CAS_ANTISPAM = None
+
+try:
+    INTELLIVOID_ANTISPAM = getConfig('INTELLIVOID_ANTISPAM').lower() == 'true'
+    logging.info('Using INTELLIVOID_ANTISPAM')
+except KeyError:
+    logging.info('No using INTELLIVOID_ANTISPAM')
+    INTELLIVOID_ANTISPAM = None
 
 updater = tgUpdater(token=BOT_TOKEN, request_kwargs={'read_timeout': 20, 'connect_timeout': 15})
 bot = updater.bot
