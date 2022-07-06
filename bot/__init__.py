@@ -129,7 +129,7 @@ try:
 except:
     pass
 try:
-    aid = getConfig(MOD_USERS')
+    aid = getConfig('MOD_USERS')
     aid = aid.split()
     for _id in aid:
         MOD_USERS.add(int(_id.strip()))
@@ -150,7 +150,7 @@ try:
 except:
     pass
 try:
-    aid = getConfig(LEECH_LOG')
+    aid = getConfig('LEECH_LOG')
     aid = aid.split()
     for _id in aid:
         LEECH_LOG.add(int(_id.strip()))
