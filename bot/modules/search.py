@@ -190,16 +190,16 @@ def _getResult(search_results, key, message, method):
                 msg += f"<code><a href='{result['url']}'>{escape(result['name'])}</a></code><br>"
             if 'torrents' in result.keys():
                 for subres in result['torrents']:
-                    msg += f"<b>Quality: </b>{subres['quality']} | <b>Type: </b>{subres['type']} | <b>Size: </b>{subres['size']}<br>"
+                    msg += f"<b>🎥 Quality: </b>{subres['quality']} | <b>Type: </b>{subres['type']} | <b>Size: </b>{subres['size']}<br>"
                     if 'torrent' in subres.keys():
                         msg += f"<a href='{subres['torrent']}'>Direct Link</a><br>"
                     elif 'magnet' in subres.keys():
-                        msg += f"<b>Share Magnet to</b> <a href='http://t.me/share/url?url={subres['magnet']}'>Telegram</a><br>"
+                        msg += f"<b>🛰️ Share Magnet to</b> <a href='http://t.me/share/url?url={subres['magnet']}'>Telegram</a><br>"
                 msg += '<br>'
             else:
-                msg += f"<b>Size: </b>{result['size']}<br>"
+                msg += f"<b>💾 Size: </b>{result['size']}<br>"
                 try:
-                    msg += f"<b>Seeders: </b>{result['seeders']} | <b>Leechers: </b>{result['leechers']}<br>"
+                    msg += f"<b>💿 Seeders: </b>{result['seeders']} | <b>Leechers: </b>{result['leechers']}<br>"
                 except:
                     pass
                 if 'torrent' in result.keys():
@@ -208,13 +208,13 @@ def _getResult(search_results, key, message, method):
                     msg += f"<b>Share Magnet to</b> <a href='http://t.me/share/url?url={quote(result['magnet'])}'>Telegram</a><br><br>"
         else:
             msg += f"<a href='{result.descrLink}'>{escape(result.fileName)}</a><br>"
-            msg += f"<b>Size: </b>{get_readable_file_size(result.fileSize)}<br>"
-            msg += f"<b>Seeders: </b>{result.nbSeeders} | <b>Leechers: </b>{result.nbLeechers}<br>"
+            msg += f"<b>💾 Size: </b>{get_readable_file_size(result.fileSize)}<br>"
+            msg += f"<b>💿 Seeders: </b>{result.nbSeeders} | <b>🧲 Leechers: </b>{result.nbLeechers}<br>"
             link = result.fileUrl
             if link.startswith('magnet:'):
-                msg += f"<b>Share Magnet to</b> <a href='http://t.me/share/url?url={quote(link)}'>Telegram</a><br><br>"
+                msg += f"<b>🛰️ Share Magnet to</b> <a href='http://t.me/share/url?url={quote(link)}'>Telegram</a><br><br>"
             else:
-                msg += f"<a href='{link}'>Direct Link</a><br><br>"
+                msg += f"<b>🔗 Share Url to</b> <a href='{link}'>Direct Link</a><br><br>"
 
         if len(msg.encode('utf-8')) > 39000:
            telegraph_content.append(msg)
@@ -226,14 +226,14 @@ def _getResult(search_results, key, message, method):
     if msg != "":
         telegraph_content.append(msg)
 
-    editMessage(f"<b>Creating</b> {len(telegraph_content)} <b>Telegraph pages.</b>", message)
+    editMessage(f"<b>📇 Creating</b> {len(telegraph_content)} <b>Telegraph pages.</b>", message)
     path = [telegraph.create_page(
-                title='Mirror-leech-bot Torrent Search',
+                title='TG-Mirror-leech-bot Torrent Search',
                 content=content
             )["path"] for content in telegraph_content]
     sleep(0.5)
     if len(path) > 1:
-        editMessage(f"<b>Editing</b> {len(telegraph_content)} <b>Telegraph pages.</b>", message)
+        editMessage(f"<b>📝 Editing</b> {len(telegraph_content)} <b>Telegraph pages.</b>", message)
         telegraph.edit_telegraph(path, telegraph_content)
     return f"https://telegra.ph/{path[0]}"
 
