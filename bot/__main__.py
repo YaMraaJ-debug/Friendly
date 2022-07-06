@@ -1,7 +1,5 @@
 from signal import signal, SIGINT
 from os import path as ospath, remove as osremove, execl as osexecl
-from subprocess import run as srun, check_output
-from psutil import disk_usage, cpu_percent, swap_memory, cpu_count, virtual_memory, net_io_counters, boot_time, Process as psprocess
 from time import time
 from sys import executable
 from telegram import InlineKeyboardMarkup
@@ -20,6 +18,7 @@ from .helper.telegram_helper.button_build import ButtonMaker
 from .modules import antispam, authorize, list, cancel_mirror, mirror_status, mirror, clone, watch, shell, eval, delete, \
     speedtest, count, leech_settings, search, rss, wayback, virustotal, hash, shortener, mediainfo, stats
 
+now = datetime.now(pytz.timezone(f'{TIMEZONE}'))
 
 def start(update, context):
     chat_u = CHANNEL_USERNAME.replace('@','')
