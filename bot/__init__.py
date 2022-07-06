@@ -618,7 +618,7 @@ try:
     VIRUSTOTAL_API = getConfig('VIRUSTOTAL_API')
     if len(VIRUSTOTAL_API) < 4: raise KeyError
 except KeyError:
-    logging.warning('VIRUSTOTAL_API not provided.')
+    logging.warn('VIRUSTOTAL_API not provided.')
     VIRUSTOTAL_API = None
 try:
     VIRUSTOTAL_FREE = getConfig('VIRUSTOTAL_FREE').lower() == 'true'
