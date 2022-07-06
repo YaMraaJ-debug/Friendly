@@ -1,6 +1,8 @@
 from time import sleep, time
 from telegram import InlineKeyboardMarkup
 from telegram.message import Message
+from telegram.update import FloodWait
+
 from telegram.error import RetryAfter
 from pyrogram.errors import FloodWait
 
@@ -48,6 +50,18 @@ def editMessage(text: str, message: Message, reply_markup=None):
     except Exception as e:
         LOGGER.error(str(e))
         return str(e)
+
+def sendPhoto(text: str, bot, message, photo, reply_markup=None):
+    try:
+        return bot.send_photo(chat_id=message.chat_id, photo=photo, reply_to_message_id=message.message_id,
+            caption=text, reply_markup=reply_markup, parse_mode='html')
+    except RetryAfter as r:
+        LOGGER.warning(str(r))
+        sleep(r.retry_after * 1.5)
+        return sendPhoto(text, bot, message, photo, reply_markup)
+    except Exception as e:
+        LOGGER.error(str(e))
+        return
 
 def sendRss(text: str, bot):
     if rss_session is None:
